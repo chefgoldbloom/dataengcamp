@@ -1,0 +1,179 @@
+docker run -it \
+    -e POSTGRES_USER="root" \
+    -e POSTGRES_PASSWORD="root" \
+    -e POSTGRES_DB="ny_taxi" \
+    -v $(pwd)/ny_taxi_postgres_data:/var/lib/postgresql/data \
+    -p 5432:5432 \
+    -n pg-db \
+    postgres:latest
+
+docker run -it \
+    -e PGADMIN_DEFAULT_EMAIL="admin@admin.org" \
+    -e PGADMIN_DEFAULT_PASSWORD="root" \
+    -p 8080:80 \
+    -n pg-admin \
+    dpage/pgadmin4:latest
+
+## Network
+
+docker run -it \
+    -e POSTGRES_USER="root" \
+    -e POSTGRES_PASSWORD="root" \
+    -e POSTGRES_DB="ny_taxi" \
+    --network pg-network \
+    -v $(pwd)/ny_taxi_postgres_data:/var/lib/postgresql/data \
+    -p 5432:5432 \
+    --name pg-db \
+    postgres:latest
+
+    docker run -it \
+    -e PGADMIN_DEFAULT_EMAIL="admin@admin.org" \
+    -e PGADMIN_DEFAULT_PASSWORD="root" \
+    -p 8080:80 \
+    --network pg-network \
+    --name pg-admin \
+    dpage/pgadmin4:latest
+
+python upload-data.py \
+    --user=root \
+    --password=root \
+    --host=localhost \
+    --port=5432 \
+    --database_name=ny_taxi \
+    --table_name=yellow_taxi_data \
+    --url="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet"
+
+docker run -it --network pg-network taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=pg-db \
+    --port=5432 \
+    --database_name=ny_taxi \
+    --table_name=yellow_taxi_data \
+    --url="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet"
+
+https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2019-01.csv.gz
+
+
+S.unique_row_id, S.filename, S.VendorID, S.lpep_pickup_datetime, S.lpep_dropoff_datetime,
+S.store_and_fwd_flag, S.RatecodeID, S.PULocationID, S.DOLocationID, S.passenger_count,
+S.trip_distance, S.fare_amount, S.extra, S.mta_tax, S.tip_amount, S.tolls_amount, S.ehail_fee,
+S.improvement_surcharge, S.total_amount, S.payment_type, S.trip_type, S.congestion_surcharge
+
+# Yellow taxi schema
+unique_row_id               text,
+filename                    text,
+VendorID                    text,
+tpep_pickup_datetime        timestamp,
+tpep_dropoff_datetime       timestamp,
+passenger_count             integer,
+trip_distance               double precision,
+RatecodeID                  text,
+store_and_fwd_flag          text,
+PULocationID                text,
+DOLocationID                text,
+payment_type                integer,
+fare_amount                 double precision,
+extra                       double precision,
+mta_tax                     double precision,
+tip_amount                  double precision,
+tolls_amount                double precision,
+improvement_surcharge       double precision,
+total_amount                double precision,
+congestion_surcharge        double precision
+
+#Yellow taxi columns
+
+unique_row_id
+filename
+VendorID
+tpep_pickup_datetime
+tpep_dropoff_datetime
+passenger_count
+trip_distance
+RatecodeID
+store_and_fwd_flag
+PULocationID
+DOLocationID
+payment_type
+fare_amount
+extra
+mta_tax
+tip_amount
+tolls_amount
+improvement_surcharge
+total_amount
+congestion_surcharge
+
+S.unique_row_id
+S.filename
+S.VendorID
+S.tpep_pickup_datetime
+S.tpep_dropoff_datetime
+S.passenger_count
+S.trip_distance
+S.RatecodeID
+S.store_and_fwd_flag
+S.PULocationID
+S.DOLocationID
+S.payment_type
+S.fare_amount
+S.extra
+S.mta_tax
+S.tip_amount
+S.tolls_amount
+S.improvement_surcharge
+S.total_amount
+S.congestion_surcharge
+
+
+
+
+MERGE INTO {{render(vars.table)}} AS T
+          USING {{render(vars.staging_table)}} AS S
+          ON T.unique_row_id = S.unique_row_id
+          WHEN NOT MATCHED THEN
+            INSERT (
+                unique_row_id,
+                filename,
+                VendorID,
+                tpep_pickup_datetime,
+                tpep_dropoff_datetime,
+                passenger_count,
+                trip_distance,
+                RatecodeID,
+                store_and_fwd_flag,
+                PULocationID,
+                DOLocationID,
+                payment_type,
+                fare_amount,
+                extra,
+                mta_tax,
+                tip_amount,
+                tolls_amount,
+                improvement_surcharge,
+                total_amount,
+                congestion_surcharge
+            )
+            VALUES (
+                S.unique_row_id,
+                S.filename,
+                S.VendorID,
+                S.tpep_pickup_datetime,
+                S.tpep_dropoff_datetime,
+                S.passenger_count,
+                S.trip_distance,
+                S.RatecodeID,
+                S.store_and_fwd_flag,
+                S.PULocationID,
+                S.DOLocationID,
+                S.payment_type,
+                S.fare_amount,
+                S.extra,
+                S.mta_tax,
+                S.tip_amount,
+                S.tolls_amount,
+                S.improvement_surcharge,
+                S.total_amount,
+                S.congestion_surcharge
+            );

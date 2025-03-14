@@ -1,0 +1,7 @@
+svc-account-key.json
+aws
+google-cloud-sdk
+*.zip
+*.tar.gz
+kestra*
+*_data
