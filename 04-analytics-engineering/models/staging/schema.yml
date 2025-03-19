@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: staging
+  # For BQ:
+    database: cogent-tree-453621-r6
+    schema: taxi_dataset
+
+
+    tables:
+      - name: green_tripdata
+      - name: yellow_tripdata
